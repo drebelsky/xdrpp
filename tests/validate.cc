@@ -3,18 +3,26 @@
 #include <iostream>
 #include <xdrpp/marshal.h>
 #include <xdrpp/printer.h>
+
+// Forward declaration before including xdrtest.hh. This is necessary for GCC
+// to pick up our local test validate function properly.
+struct fix_4;
+void validate(const fix_4& f4);
+
 #include "tests/xdrtest.hh"
 
 using namespace std;
 using namespace xdr;
 
-namespace xdr {
-template<> void
-validate<fix_4>(const fix_4 &f4)
+namespace testns {
+template<typename T> inline void xdr_validate_enum(T);
+}
+
+void
+validate(const fix_4 &f4)
 {
   if (f4.i == 0)
     throw xdr::xdr_invariant_failed("fix_4::i has value 0");
-}
 }
 
 int
@@ -51,6 +59,19 @@ main()
     ok = true;
   }
   assert (ok);
+
+  v = xdr_to_opaque(uint32_t{99});
+  color c;
+  xdr_from_opaque(v, c);
+
+  testns::other_color oc;
+  ok = false;
+  try {
+    xdr_from_opaque(v, oc);
+  } catch (const xdr::xdr_invariant_failed &) {
+    ok = true;
+  }
+  assert(ok);
 
   return 0;
 }

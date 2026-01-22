@@ -179,6 +179,8 @@ template<typename Base> struct xdr_generic_get : Base {
   void operator()(T &t) {
     check(4);
     t = xdr_traits<T>::from_uint(get32(p_));
+    if constexpr (xdr_enum<T>)
+      validate_enum<T>::validate(t);
   }
 
   template<xdr_numlike T>
